@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>PowerSpin — Монетка</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #f5f6f7, #dfe3e6);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+  }
+  h1 { color: #333; }
+  #coinBtn {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    border: none;
+    background: radial-gradient(circle at 30% 30%, #ffd54f, #f9a825);
+    font-size: 22px;
+    font-weight: bold;
+    color: #5d4037;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    transition: transform 0.1s, box-shadow 0.2s;
+  }
+  #coinBtn:hover:not(:disabled) { transform: scale(1.05); }
+  #coinBtn:active:not(:disabled) { transform: scale(0.95); }
+  #coinBtn:disabled {
+    background: radial-gradient(circle at 30% 30%, #cfd8dc, #90a4ae);
+    color: #546e7a;
+    cursor: not-allowed;
+  }
+  .info { font-size: 18px; color: #37474f; margin: 12px 0; }
+  .balance { font-size: 28px; font-weight: bold; }
+</style>
+</head>
+<body>
+  <h1>PowerSpin — Монетка</h1>
+  <p class="info balance">Баланс: <span id="balance">0.0</span> монет</p>
+  <button id="coinBtn">💰 Клик!</button>
+  <p class="info">До следующего клика: <span id="cooldown">0</span> с</p>
+
+<script>
+  const COOLDOWN_TIME = 50;  // секунд между кликами
+  const REWARD = 0.1;        // монет за клик
+
+  const btn = document.getElementById('coinBtn');
+  const balanceEl = document.getElementById('balance');
+  const cooldownEl = document.getElementById('cooldown');
+
+  let balance = parseFloat(localStorage.getItem('balance')) || 0;
+  let nextClickAt = parseFloat(localStorage.getItem('nextClickAt')) || 0;
+  let intervalId = null;
+
+  function save() {
+    localStorage.setItem('balance', balance);
+    localStorage.setItem('nextClickAt', nextClickAt);
+  }
+
+  function render() {
+    balanceEl.textContent = balance.toFixed(1);
+    const now = Date.now();
+    const remaining = Math.max(0, Math.ceil((nextClickAt - now) / 1000));
+    cooldownEl.textContent = remaining;
+    btn.disabled = remaining > 0;
+    btn.textContent = btn.disabled ? '⏳ ' + remaining + ' с' : '💰 Клик!';
+  }
+
+  function tick() {
+    render();
+    if (btn.disabled === false && intervalId !== null) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
+
+  btn.addEventListener('click', () => {
+    const now = Date.now();
+    if (now < nextClickAt) return;
+    balance += REWARD;
+    nextClickAt = now + COOLDOWN_TIME * 1000;
+    save();
+    render();
+    if (intervalId === null) intervalId = setInterval(tick, 1000);
+  });
+
+  render();
+  if (btn.disabled) intervalId = setInterval(tick, 1000);
+</script>
+</body>
+</html>
